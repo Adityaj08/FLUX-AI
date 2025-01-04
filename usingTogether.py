@@ -3,17 +3,15 @@ import base64
 import io
 import zipfile
 from PIL import Image
-import requests
+from together import Together
 from datetime import datetime, timedelta
 
-# Import the API key from secrets
-TOGETHER_API_KEY = st.secrets["TOGETHER_API_KEY"]
+T_Token = "a155f54cccdac0acdce9168344b51cea68a199592bdd341b06dd2e61bbc0209c"
 
 st.set_page_config(
     page_title="FLUX AI"
 )
 
-# [Previous CSS styles remain unchanged]
 st.markdown("""
 <style>
     body {
@@ -96,6 +94,7 @@ EXAMPLE_PROMPTS = [
 ]
 
 def generate_images(prompt, num_images, aspect_ratio):
+    client = Together(api_key=T_Token)
     images = []
     
     if aspect_ratio == "1:1":
@@ -112,36 +111,23 @@ def generate_images(prompt, num_images, aspect_ratio):
     width = (width // 16) * 16
     height = (height // 16) * 16
 
-    url = "https://api.together.xyz/v1/images/generations"
-    headers = {
-        "accept": "application/json",
-        "content-type": "application/json",
-        "authorization": f"Bearer {TOGETHER_API_KEY}"
-    }
-
     for _ in range(num_images):
         try:
-            payload = {
-                "model": "black-forest-labs/FLUX.1-schnell-Free",
-                "prompt": prompt,
-                "width": width,
-                "height": height,
-                "steps": 1,
-                "n": 1,
-                "response_format": "base64"
-            }
-            
-            response = requests.post(url, json=payload, headers=headers)
-            response.raise_for_status()  # Raise exception for bad status codes
-            
-            response_json = response.json()
-            images.append(response_json['data'][0]['b64_json'])
+            response = client.images.generate(
+                prompt=prompt,
+                model="black-forest-labs/FLUX.1-schnell-Free",
+                width=width,
+                height=height,
+                steps=1,
+                n=1,
+                response_format="b64_json"
+            )
+            images.append(response.data[0].b64_json)
         except Exception as e:
             st.error(f"Error generating image: {str(e)}")
     
     return images
 
-# [Rest of the functions remain unchanged]
 def save_image(b64_string):
     try:
         image_data = base64.b64decode(b64_string)
@@ -166,7 +152,6 @@ def create_zip_file():
     
     return memory_zip.getvalue()
 
-# [Rest of the UI code remains unchanged]
 st.title("FLUX AI",help="RATE LIMIT 6 IMGS/S")
 st.markdown("### Generate unique images using advanced FLUX AI")
 
@@ -200,17 +185,18 @@ if st.button("Generate Images", use_container_width=True) or (prompt and st.sess
     
     loading_placeholder = st.empty()
     
+    # Set loading skeleton size based on aspect ratio
     if aspect_ratio == "1:1":
         skeleton_height = "300px"
         skeleton_width = "300px"
     elif aspect_ratio == "16:9":
-        skeleton_height = "169px"
+        skeleton_height = "169px"  # Adjusted height for 16:9
         skeleton_width = "300px"
     elif aspect_ratio == "9:16":
         skeleton_height = "300px"
-        skeleton_width = "169px"
+        skeleton_width = "169px"  # Adjusted width for 9:16
     elif aspect_ratio == "4:3":
-        skeleton_height = "225px"
+        skeleton_height = "225px"  # Adjusted height for 4:3
         skeleton_width = "300px"
     else:
         skeleton_height = "300px"
@@ -243,18 +229,19 @@ if st.session_state.generated_images:
             image_data, filename = item
             with cols[idx % 3]:
                 st.markdown(f'<a href="data:image/png;base64,{base64.b64encode(image_data.getvalue()).decode()}" download="{filename}"><img src="data:image/png;base64,{base64.b64encode(image_data.getvalue()).decode()}" style="width:100%; border-radius: 15px; margin-bottom: 1rem;"></a>', unsafe_allow_html=True)
-    
     st.download_button(
-        label="Download ZIP",
-        data=create_zip_file(),
-        file_name="FLUX_AI.zip",
-        mime="application/zip",
-        key=f"download_button_{idx}",
-        help="Click to download all generated images as a ZIP file",
+                label="Download ZIP",
+                data=create_zip_file(),
+                file_name="FLUX_AI.zip",
+                mime="application/zip",
+                key=f"download_button_{idx}",
+                help="Click to download all generated images as a ZIP file",
     )
 
-    st.markdown("<br><br>", unsafe_allow_html=True)
+    # Add spacing before the button
+    st.markdown("<br><br>", unsafe_allow_html=True)  # This adds vertical space
 
+    # Add the Twitter/X card
     st.markdown("""
     <div style="background:rgba(255,255,255,0.05);text-align: center; margin-top: 20px; padding: 10px; border: 1px solid rgba(255,255,255,0.05); border-radius: 10px;">
         <a href="https://x.com/aditya_avadhoot" target="_blank" style="text-decoration: none; color: #000;">
