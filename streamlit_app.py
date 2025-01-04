@@ -114,7 +114,7 @@ def generate_images(prompt, num_images, aspect_ratio):
 
     for _ in range(num_images):
         try:
-            response = client.images.generate(
+            response = client.generate_images(
                 prompt=prompt,
                 model="black-forest-labs/FLUX.1-schnell-Free",
                 width=width,
