@@ -95,7 +95,7 @@ EXAMPLE_PROMPTS = [
 
 def generate_images(prompt, num_images, aspect_ratio):
     api_key = st.secrets["general"]["TOGETHER_API_KEY"]
-    client = Together(api_key=api_key)
+    client = Together()
     images = []
     
     if aspect_ratio == "1:1":
