@@ -5,8 +5,8 @@ import zipfile
 from PIL import Image
 from together import Together
 from datetime import datetime, timedelta
+import os
 
-T_Token = "a155f54cccdac0acdce9168344b51cea68a199592bdd341b06dd2e61bbc0209c"
 
 st.set_page_config(
     page_title="FLUX AI"
@@ -94,7 +94,8 @@ EXAMPLE_PROMPTS = [
 ]
 
 def generate_images(prompt, num_images, aspect_ratio):
-    client = Together(api_key=T_Token)
+    api_key = st.secrets["general"]["TOGETHER_API_KEY"]
+    client = Together(api_key=api_key)
     images = []
     
     if aspect_ratio == "1:1":
